@@ -13,8 +13,7 @@ def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 cls()
 
-itemnum = 0
-requested = 0
+paramslist = []
 firstItem = ""
 
 headers= {'User-Agent': 'Mozilla/5.0'}
@@ -24,53 +23,64 @@ headers= {'User-Agent': 'Mozilla/5.0'}
 eel.init('web')
 
 @eel.expose
-def searchpy(link, pages, notif):
+def skelbiu(link, pages, notif):
 	global firstItem
+	yeet1 = 0
+	itemnum = 0
 	splitlink = link.split("/")
-	skipped = 0
-	yeet1=0
-	page = 1
 
 	eel.CleanTable()
-	for i in range(0, int(pages)):
+
+	for page in range(int(pages)):
+
+		rlpage = page+1
 
 		if len(splitlink) == 5:
-			rlink = splitlink[0] +"/"+ splitlink[1] +"/"+ splitlink[2] +"/"+ splitlink[3] + "/" + str(page) + splitlink[4]
+			rlink = splitlink[0] +"/"+ splitlink[1] +"/"+ splitlink[2] +"/"+ splitlink[3] + "/" + str(rlpage) + splitlink[4]
 		else:
-			rlink = splitlink[0] +"/"+ splitlink[1] +"/" + str(page) + splitlink[2]
+			rlink = splitlink[0] +"/"+ splitlink[1] +"/" + str(rlpage) + splitlink[2]
 
-		global itemnum
 
 		source = requests.get(rlink, headers=headers).text
 		soup = BeautifulSoup(source, "lxml")
 		body = soup.find('body')
-		content = body.findAll('li', class_=True, id=True)
-		prices = body.findAll('div', class_="adsPrice")
-		date = body.findAll('div', class_="adsDate")
-		city = body.findAll('div', class_="adsCity")
-		description = body.findAll('div', class_="adsTextReview")
-		name = body.findAll('h3')
-		status = body.findAll('div', class_="adsTextMoreDetails")
 
-		for price in prices:
+		adverts = body.findAll('li', class_='simpleAds')
+
+		for advert in adverts:
 			try:
-				rprice = prices[itemnum].find('span').text
-				rname = " ".join(name[itemnum+1].text.split())
-				rstatus = " ".join(status[itemnum].text.split())
-				rdescription = " ".join(description[itemnum].text.split())
-				#numprice = int(re.search(r'\d+', rprice.replace(" ", "")).group())
-				url = content[itemnum+4].find('a', href=True)
-				url = "https://www.skelbiu.lt" + url['href']
-				eel.UpdateTable(str(url), rprice, " | " + date[itemnum].text + " | ", city[itemnum].text, " | " + rstatus, " | " + rname, " | " + rdescription, yeet1, skipped)
+
+				content = advert.find('div', class_='itemReview')
+
+				pricediv = content.find('div', class_='adsPrice')
+				price = pricediv.find('span').text
+
+				name = content.find('a', class_='js-cfuser-link')
+				url = 'https://www.skelbiu.lt/' + name['href']
+				rlname = " ".join(name.text.split())
+
+				date = advert.find('div', class_="adsDate").text
+				city = advert.find('div', class_="adsCity").text
+
+				description = content.find('div', class_="adsTextReview").text
+				rldescription = " ".join(description.split())
+
+				condition = content.find('div', class_="adsTextMoreDetails").text
+				rlcondition = " ".join(condition.split())
+
+				eel.UpdateTableSkelbiu(url, price + " | ", date + " | ", city + " | ", condition + " | ", rlname, " | " + description, itemnum)
+				# print(price + " | " + rlname + " | " + city + " | " + date + " | " + rlcondition) ---- debug
+
+				itemnum += 1
 			except:
-				skipped += 1
 				pass
+		
 			if yeet1 == 0:
 				# print("fist =", firstItem, "rname =", rname) #-------debug
 				if firstItem == "":
-					firstItem = rname
+					firstItem = rlname
 				if notif == True:
-					if firstItem != rname:
+					if firstItem != rlname:
 						print('new')
 						try:
 							playsound('sound.mp3')
@@ -79,11 +89,105 @@ def searchpy(link, pages, notif):
 								playsound('sound.wav')
 							except:
 								pass
-				firstItem = rname
+				firstItem = rlname
 			yeet1 += 1
-			itemnum += 1
 
-		itemnum = 0
-		page += 1
+@eel.expose
+def autoplius(link, pages, notif):
+	global firstItem
+	eel.CleanTable()
+	yeet1 = 0
+	itemnum = 0
+	for page in range(int(pages)):
+		rlpage = page+1
+
+		if(link.find('page_nr') != -1):
+			rlink = link.replace(link[-1], str(rlpage))
+		else:
+			rlink = " ".join((link, '&page_nr=' + str(rlpage)))
+
+		source = requests.get(rlink).text
+		soup = BeautifulSoup(source, "lxml")
+		body = soup.find('body')
+
+		adverts = body.findAll('a', class_='item-thumb js-announcement-list-item')
+		announcments = body.findAll('a', class_='announcement-item')
+
+		if(adverts != []):
+			for advert in adverts:
+				try:
+					paramslist = []
+
+					url = advert['href']
+
+					price = advert.find('strong').text
+					rlprice = " ".join(price.split())
+
+					year = advert.find('div', class_='title-year').text
+					rlyear = " ".join(year.split())
+
+					title = advert.find('div', class_='line1').text
+					rltitle = " ".join(title.split())
+
+					params = advert.findAll('span')
+					for param in params:
+						rlparam = " ".join(param.text.split())
+						paramslist.append(rlparam)
+
+					parameters = str(paramslist)[0:-1].replace("'", '').replace(",", " |").replace("[", "")
+
+					eel.UpdateTableAutoplius(url, rlprice + " | ", rlyear + " | ", rltitle, parameters, itemnum)
+					#print(rlprice,"|",rlyear,"|",rltitle, parameters, url) -- debug
+					itemnum += 1
+				except:
+					pass
+
+		else:
+			#print('announcment:', announcments) -- debug
+			for announcment in announcments:
+				try:
+					paramslist = []
+
+					url = announcment['href']
+
+					price = announcment.find('strong').text
+					rlprice = " ".join(price.split())
+
+					year = announcment.find('span', title='Pagaminimo data').text
+					rlyear = " ".join(year.split())
+
+					title = announcment.find('div', class_='announcement-title').text
+					rltitle = " ".join(title.split())
+
+					params = announcment.findAll('span')
+					for param in params:
+						rlparam = " ".join(param.text.split())
+						paramslist.append(rlparam)
+
+					parameters = str(paramslist)[0:-1].replace("'", '').replace(",", " |").replace("[", "")
+
+					eel.UpdateTableAutoplius(url, rlprice + " | ", rlyear + " | ", rltitle, " | " + parameters, itemnum)
+					#print(rlprice,"|",rlyear,"|",rltitle, parameters, url) -- debug
+					itemnum += 1
+				except:
+					pass
+
+		if yeet1 == 0:
+			# print("fist =", firstItem, "rname =", rname) #-------debug
+			if firstItem == "":
+				firstItem = rltitle
+			if notif == True:
+				if firstItem != rltitle:
+					# print('new') -- debug
+					try:
+						playsound('sound.mp3')
+					except:
+						try:
+							playsound('sound.wav')
+						except:
+							pass
+			firstItem = rltitle
+		yeet1 += 1
+
 
 eel.start('index.html', size=(1980, 1080), position=(0, 0))
