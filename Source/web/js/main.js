@@ -28,13 +28,26 @@ document.getElementById("checkBtn").addEventListener("click", ()=>{ // when appl
 	}
 
 	//timer function: (if I did this in Python it would be slow and sometimes the UI does not work if you do it in Python)
+	//skelbiu
 	if (rtime != ""){
+		if (rtime < 5){rtime = 5}
 		clearInterval(intID);
-		eel.searchpy(searchword, pages, rtime)
-		const intervalId = setInterval(function(){eel.searchpy(searchword, pages, notif)}, rtime * 1000); //activate python scrape function with timer
+		eel.skelbiu(searchword, pages, rtime)
+		const intervalId = setInterval(function(){eel.skelbiu(searchword, pages, notif)}, rtime * 1000); //activate python scrape function with timer
 		intID+=1;
 		console.log(intervalId, intID)}
-	else{eel.searchpy(searchword, pages, notif); clearInterval(intID);}; //activate python scrape function
+	else{eel.skelbiu(searchword, pages, notif); clearInterval(intID);}; //activate python scrape function
+	//autoplius
+	if(searchword.search('autoplius.lt') != -1){
+		if (rtime != ""){
+			if (rtime < 5){rtime = 5}
+			clearInterval(intID);
+			eel.autoplius(searchword, pages, rtime)
+			const intervalId = setInterval(function(){eel.autoplius(searchword, pages, notif)}, rtime * 1000); //activate python scrape function with timer
+			intID+=1;
+			console.log(intervalId, intID)}
+			else{eel.autoplius(searchword, pages, notif); clearInterval(intID);}; //activate python scrape function
+		}
 	}, false);
 	
 ItemTable = document.getElementById("ItemTable");
@@ -44,8 +57,8 @@ function CleanTable() {
 	while (ItemTable.firstChild) {ItemTable.removeChild(ItemTable.lastChild);} //while there is something in table delete a child
 }
 
-eel.expose(UpdateTable)
-function UpdateTable(url, price, time, city, condition, name, description, itemnum, skipped) {
+eel.expose(UpdateTableSkelbiu)
+function UpdateTableSkelbiu(url, price, time, city, condition, name, description, itemnum) {
 	//pretty unoptimized but works ¯\_(ツ)_/¯
 	//everything is in a span cause its easier to color if color function were to be added (just like el_spanName)
 
@@ -93,9 +106,52 @@ function UpdateTable(url, price, time, city, condition, name, description, itemn
   	a1.appendChild(el_spanName);
   	if(showdesc == true){a1.appendChild(el_spanDescription);}
 
-  	document.getElementsByClassName('time')[itemnum-skipped].appendChild(addtime);
-  	document.getElementsByClassName('city')[itemnum-skipped].appendChild(addcity);
-  	document.getElementsByClassName('condition')[itemnum-skipped].appendChild(addcondition);
-  	document.getElementsByClassName('name')[itemnum-skipped].appendChild(addname);
-  	if(showdesc == true){document.getElementsByClassName('description')[itemnum-skipped].appendChild(adddescription);}
+  	document.getElementsByClassName('time')[itemnum].appendChild(addtime);
+  	document.getElementsByClassName('city')[itemnum].appendChild(addcity);
+  	document.getElementsByClassName('condition')[itemnum].appendChild(addcondition);
+  	document.getElementsByClassName('name')[itemnum].appendChild(addname);
+  	if(showdesc == true){document.getElementsByClassName('description')[itemnum].appendChild(adddescription);}
+};
+
+eel.expose(UpdateTableAutoplius)
+function UpdateTableAutoplius(url, price, year, name, parameters, itemnum) {
+	//pretty unoptimized but works ¯\_(ツ)_/¯
+	//everything is in a span cause its easier to color if color function were to be added (just like el_spanName)
+
+	//price
+	el_spanPrice = document.createElement('span');
+	addprice = document.createTextNode(price);
+	el_spanPrice.appendChild(addprice);
+	//year
+	el_spanYear = document.createElement('span');
+	el_spanYear.className = "year";
+	addyear = document.createTextNode(year);
+	//name
+	el_spanName = document.createElement('span');
+	el_spanName.className = "name";
+	addname = document.createTextNode(name);
+	//parameters
+	if(showdesc == true){
+		el_spanParameters = document.createElement('span');
+		el_spanParameters.className = "parameters";
+		if(namesearch.length != 0){if(parameters.toUpperCase().search(namesearch.toUpperCase()) != -1){el_spanParameters.setAttribute('style', 'color: green')};};
+		addparameters = document.createTextNode(parameters);
+	}
+
+ 	creatediv = document.createElement('div')
+	a1 = document.createElement("a");
+  	ItemTable.appendChild(creatediv);
+  	creatediv.classList.add("listitem");
+  	creatediv.appendChild(a1);
+
+  	a1.setAttribute("href", url); // set url on item
+  	a1.setAttribute('target', "_blank"); // make it so the url opens in new tab, if browser is closed open browser and open tab
+  	a1.appendChild(el_spanPrice);
+  	a1.appendChild(el_spanYear);
+  	a1.appendChild(el_spanName);
+  	if(showdesc == true){a1.appendChild(el_spanParameters);}
+
+  	document.getElementsByClassName('year')[itemnum].appendChild(addyear);
+  	document.getElementsByClassName('name')[itemnum].appendChild(addname);
+  	if(showdesc == true){document.getElementsByClassName('parameters')[itemnum].appendChild(addparameters);}
 };
