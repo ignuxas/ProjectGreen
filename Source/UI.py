@@ -173,7 +173,7 @@ def autoplius(link, pages, notif):
 					pass
 
 		if yeet1 == 0:
-			# print("fist =", firstItem, "rname =", rname) #-------debug
+			# print("fist =", firstItem, "rname =", rname) #------debug
 			if firstItem == "":
 				firstItem = rltitle
 			if notif == True:
