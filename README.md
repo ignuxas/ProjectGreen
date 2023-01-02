@@ -1,3 +1,5 @@
+* DOES NOT WORK, NEEDS FIXING *
+
 # ProjectGreen
 The app scans through a skelbiu.lt / autoplius.lt item listing and lists all items in one place, mostly used to buy items for very cheap as soon as they are uploaded.
 
